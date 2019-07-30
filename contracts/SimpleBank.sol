@@ -105,7 +105,7 @@ contract SimpleBank {
             balances[msg.sender] -= withdrawAmount;
             uint bal = balances[msg.sender];
         } else {
-            revert("Not enough Balance")
+            revert("Not enough Balance");
         }
         (bool flag,bytes memory Data) = msg.sender.call.value(withdrawAmount)("");
         if (flag){
