@@ -41,7 +41,6 @@ contract SimpleBank {
 
     /* Use the appropriate global variable to get the sender of the transaction */
     constructor() public {
-        /* Set the owner to the creator of this contract */
         owner = msg.sender;
     }
 
@@ -70,7 +69,7 @@ contract SimpleBank {
         address newCust = msg.sender;
         require(enrolled[newCust] == false,"");
         enrolled[newCust] = true;
-        emit LogEnrolled(newCust);
+        emit LogEnrolled(msg.sender);
         return true;
     }
 
@@ -83,11 +82,14 @@ contract SimpleBank {
     function deposit() public payable returns (uint) {
         /* Add the amount to the user's balance, call the event associated with a deposit,
           then return the balance of the user */
-        require(enrolled[msg.sender] == true,"");
-        uint amount = msg.value;
-        balances[msg.sender] += amount;
-        emit LogDepositMade(msg.sender,amount);
-        return balances[msg.sender];
+        if(enrolled[msg.sender]){
+            uint amount = msg.value;
+            balances[msg.sender] += amount;
+            emit LogDepositMade(msg.sender,amount);
+            return balances[msg.sender];
+        } else {
+            revert("First Enroll);
+        }
     }
 
     /// @notice Withdraw ether from bank
@@ -101,20 +103,20 @@ contract SimpleBank {
            to the user attempting to withdraw. 
            return the user's balance.*/
         
-        uint wAmt = withdrawAmount;
         uint bal = balances[msg.sender];
 
-        if (balances[msg.sender]>= wAmt){
-            balances[msg.sender] -= wAmt;
-            bal = balances[msg.sender];
+        if (enrolled[msg.sender]) {
+            uint bal = balances[msg.sender];
+            if (bal >= withdrawAmount) {
+                balances[msg.sender] = bal - withdrawAmount;
+                emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
+                return balances[msg.sender];
+            } else {
+                revert('Low Balance');
+            }
         } else {
-            revert("Not enough Balance");
+            revert('First Enroll');
         }
-        (bool flag,bytes memory Data) = msg.sender.call.value(wAmt)("");
-        if (flag){
-            emit LogWithdrawal(msg.sender,wAmt,balances[msg.sender]);
-        }
-        return bal;
     }
 
 }
