@@ -88,7 +88,7 @@ contract SimpleBank {
             emit LogDepositMade(msg.sender,amount);
             return balances[msg.sender];
         } else {
-            revert("First Enroll");
+            revert('First Enroll');
         }
     }
 
