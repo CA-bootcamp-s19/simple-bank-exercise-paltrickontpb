@@ -100,16 +100,19 @@ contract SimpleBank {
            Subtract the amount from the sender's balance, and try to send that amount of ether
            to the user attempting to withdraw. 
            return the user's balance.*/
+        
+        uint wAmt = withdrawAmount;
+        uint bal = balances[msg.sender];
 
-        if (balances[msg.sender]>= withdrawAmount){
-            balances[msg.sender] -= withdrawAmount;
-            uint bal = balances[msg.sender];
+        if (balances[msg.sender]>= wAmt){
+            balances[msg.sender] -= wAmt;
+            bal = balances[msg.sender];
         } else {
             revert("Not enough Balance");
         }
-        (bool flag,bytes memory Data) = msg.sender.call.value(withdrawAmount)("");
+        (bool flag,bytes memory Data) = msg.sender.call.value(wAmt)("");
         if (flag){
-            emit LogWithdrawal(msg.sender,withdrawAmount,balances[msg.sender]);
+            emit LogWithdrawal(msg.sender,wAmt,balances[msg.sender]);
         }
         return bal;
     }
