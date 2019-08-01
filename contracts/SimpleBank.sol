@@ -4,6 +4,7 @@
     https://solidity.readthedocs.io/en/v0.5.0/050-breaking-changes.html
 */
 
+
 pragma solidity ^0.5.0;
 
 contract SimpleBank {
@@ -29,7 +30,7 @@ contract SimpleBank {
     event LogEnrolled(address indexed accountAddress);
 
     /* Add 2 arguments for this event, an accountAddress and an amount */
-    event LogDepositMade(address indexed accountAddress, uint amt);
+    event LogDepositMade(address indexed accountAddress, uint amount);
 
     /* Create an event called LogWithdrawal */
     /* Add 3 arguments for this event, an accountAddress, withdrawAmount and a newBalance */
@@ -41,6 +42,7 @@ contract SimpleBank {
 
     /* Use the appropriate global variable to get the sender of the transaction */
     constructor() public {
+        /* Set the owner to the creator of this contract */
         owner = msg.sender;
     }
 
@@ -50,14 +52,14 @@ contract SimpleBank {
     // Added so ether sent to this contract is reverted if the contract fails
     // otherwise, the sender's money is transferred to contract
     function() external payable {
-        revert("Transaction Failed");
+        revert();
     }
 
     /// @notice Get balance
     /// @return The balance of the user
     // A SPECIAL KEYWORD prevents function from editing state variables;
     // allows function to run locally/off blockchain
-    function getBalance() public returns (uint) {
+    function getBalance() public view returns (uint) {
         /* Get the balance of the sender of this transaction */
         return balances[msg.sender];
     }
@@ -66,11 +68,8 @@ contract SimpleBank {
     /// @return The users enrolled status
     // Emit the appropriate event
     function enroll() public returns (bool){
-        address newCust = msg.sender;
-        require(enrolled[newCust] == false,"");
-        enrolled[newCust] = true;
-        emit LogEnrolled(msg.sender);
-        return true;
+        enrolled[msg.sender]=true;
+        emit LogEnrolled(msg.sender);        
     }
 
     /// @notice Deposit ether into bank
@@ -82,13 +81,10 @@ contract SimpleBank {
     function deposit() public payable returns (uint) {
         /* Add the amount to the user's balance, call the event associated with a deposit,
           then return the balance of the user */
-        if(enrolled[msg.sender]){
-            uint amount = msg.value;
-            balances[msg.sender] += amount;
-            emit LogDepositMade(msg.sender,amount);
-            return balances[msg.sender];
-        } else {
-            revert('First Enroll');
+        if (enrolled[msg.sender]) {
+            balances[msg.sender] += msg.value;
+            emit LogDepositMade(msg.sender, msg.value);
+            return balances[msg.sender];            
         }
     }
 
@@ -102,21 +98,14 @@ contract SimpleBank {
            Subtract the amount from the sender's balance, and try to send that amount of ether
            to the user attempting to withdraw. 
            return the user's balance.*/
-        
-        uint bal = balances[msg.sender];
-
-        if (enrolled[msg.sender]) {
-            uint bal = balances[msg.sender];
-            if (bal >= withdrawAmount) {
-                balances[msg.sender] = bal - withdrawAmount;
-                emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
-                return balances[msg.sender];
-            } else {
-                revert('Low Balance');
-            }
-        } else {
-            revert('First Enroll');
+        /// if ((enrolled[msg.sender]) && (withdrawAmount<=balances[msg.sender]>=)) {           
+        require(withdrawAmount<=balances[msg.sender]);            
+        if (withdrawAmount<=balances[msg.sender]) {
+            balances[msg.sender] -= withdrawAmount;
+            msg.sender.transfer(withdrawAmount);
+            emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
         }
+        return balances[msg.sender];
     }
 
 }
